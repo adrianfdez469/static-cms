@@ -12,7 +12,7 @@ export async function POST(request) {
   }
 
   for (const tag of tags) {
-    revalidateTag(tag);
+    revalidateTag(tag, { expire: 0 });
   }
 
   return Response.json({ revalidated: true, paths, tags });
