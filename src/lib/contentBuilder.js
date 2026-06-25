@@ -1,7 +1,15 @@
 import { marked } from "marked";
 import { unstable_cache } from "next/cache";
-import { BUCKET, CONTENT_PREFIX, TEMPLATE_PATH } from "./cmsConstants";
+import {
+  BUCKET,
+  CONTENT_PREFIX,
+  DEFAULT_TEMPLATE,
+  TEMPLATE_PATH,
+} from "./cmsConstants";
 import { createSupabaseClient } from "./supabase";
+import { renderTemplate } from "./templateHtml";
+
+export { extractRenderableTemplateParts } from "./templateHtml";
 
 const isDev = process.env.NODE_ENV === "development";
 
@@ -62,10 +70,6 @@ async function getTemplate() {
   }
 
   return fetchTemplate();
-}
-
-function renderTemplate(template, contentHtml) {
-  return template.replace("{{content}}", contentHtml);
 }
 
 function isStorageFolder(item) {
@@ -161,19 +165,36 @@ export async function buildPage(slug) {
   );
 }
 
-export function buildNotFoundHtml() {
-  return `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <title>Page not found</title>
-</head>
-<body>
-  <main>
-    <h1>404 - Page not found</h1>
-    <p>The requested page does not exist.</p>
+function buildErrorContentHtml({ heading, message }) {
+  return `<main>
+    <h1>${heading}</h1>
+    <p>${message}</p>
     <p><a href="/">Back to home</a></p>
-  </main>
-</body>
-</html>`;
+  </main>`;
+}
+
+async function buildErrorPage({ heading, message }) {
+  const contentHtml = buildErrorContentHtml({ heading, message });
+
+  try {
+    const template = await getTemplate();
+    return renderTemplate(template, contentHtml);
+  } catch (error) {
+    console.error("Error page template render failed:", error);
+    return renderTemplate(DEFAULT_TEMPLATE, contentHtml);
+  }
+}
+
+export function buildNotFoundPage() {
+  return buildErrorPage({
+    heading: "404 - Page not found",
+    message: "The requested page does not exist.",
+  });
+}
+
+export function buildServerErrorPage() {
+  return buildErrorPage({
+    heading: "500 - Server error",
+    message: "Something went wrong while rendering this page.",
+  });
 }

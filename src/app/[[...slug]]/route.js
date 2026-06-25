@@ -1,7 +1,8 @@
 import {
   buildIndexPage,
-  buildNotFoundHtml,
+  buildNotFoundPage,
   buildPage,
+  buildServerErrorPage,
 } from "@/lib/contentBuilder";
 
 export const revalidate = false;
@@ -25,7 +26,7 @@ export async function GET(_request, { params }) {
         : await buildPage(slug);
 
     if (!html) {
-      return new Response(buildNotFoundHtml(), {
+      return new Response(await buildNotFoundPage(), {
         status: 404,
         headers: ERROR_HEADERS,
       });
@@ -37,7 +38,7 @@ export async function GET(_request, { params }) {
     });
   } catch (error) {
     console.error("CMS render error:", error);
-    return new Response(buildNotFoundHtml(), {
+    return new Response(await buildServerErrorPage(), {
       status: 500,
       headers: ERROR_HEADERS,
     });

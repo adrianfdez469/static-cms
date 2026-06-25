@@ -1,11 +1,21 @@
-export default function NotFound() {
+import {
+  buildNotFoundPage,
+  extractRenderableTemplateParts,
+} from "@/lib/contentBuilder";
+
+export default async function NotFound() {
+  const html = await buildNotFoundPage();
+  const { styles, links, bodyHtml } = extractRenderableTemplateParts(html);
+
   return (
-    <main>
-      <h1>404 - Page not found</h1>
-      <p>The requested page does not exist.</p>
-      <p>
-        <a href="/">Back to home</a>
-      </p>
-    </main>
+    <>
+      {links.map((href) => (
+        <link key={href} rel="stylesheet" href={href} />
+      ))}
+      {styles.map((css, index) => (
+        <style key={index} dangerouslySetInnerHTML={{ __html: css }} />
+      ))}
+      <div dangerouslySetInnerHTML={{ __html: bodyHtml }} />
+    </>
   );
 }
