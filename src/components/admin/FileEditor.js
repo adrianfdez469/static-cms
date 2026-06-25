@@ -6,7 +6,8 @@ import {
   readFileAction,
   saveFileAction,
 } from "@/app/admin/actions";
-import { storagePathToPublicPath } from "@/lib/cmsConstants";
+import { storagePathToPublicPath, TEMPLATE_PATH } from "@/lib/cmsConstants";
+import TemplateAiChat from "./TemplateAiChat";
 
 export default function FileEditor({ file, onSaved, onDeleted }) {
   const [content, setContent] = useState("");
@@ -14,12 +15,17 @@ export default function FileEditor({ file, onSaved, onDeleted }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [aiOpen, setAiOpen] = useState(false);
+  const [aiStreaming, setAiStreaming] = useState(false);
+
+  const isTemplate = file?.path === TEMPLATE_PATH;
 
   useEffect(() => {
     if (!file?.path) {
       setContent("");
       setError("");
       setSuccess("");
+      setAiOpen(false);
       return;
     }
 
@@ -43,6 +49,12 @@ export default function FileEditor({ file, onSaved, onDeleted }) {
       cancelled = true;
     };
   }, [file?.path]);
+
+  useEffect(() => {
+    if (!isTemplate) {
+      setAiOpen(false);
+    }
+  }, [isTemplate]);
 
   async function handleSave() {
     setSaving(true);
@@ -89,7 +101,7 @@ export default function FileEditor({ file, onSaved, onDeleted }) {
   }
 
   return (
-    <div className="admin-panel">
+    <div className={`admin-panel${aiOpen ? " admin-panel-with-ai" : ""}`}>
       <h2>Editor</h2>
       <p className="admin-path">{file.path}</p>
       {error && <p className="admin-error">{error}</p>}
@@ -97,43 +109,67 @@ export default function FileEditor({ file, onSaved, onDeleted }) {
       {loading ? (
         <p className="admin-empty">Loading file...</p>
       ) : (
-        <>
-          <textarea
-            className="admin-editor"
-            value={content}
-            onChange={(event) => setContent(event.target.value)}
-          />
-          <div className="admin-actions">
-            <button
-              type="button"
-              className="admin-btn"
-              onClick={handleSave}
-              disabled={saving}
-            >
-              {saving ? "Saving..." : "Save"}
-            </button>
-            {previewPath && (
+        <div className={aiOpen ? "admin-editor-layout" : undefined}>
+          <div className="admin-editor-column">
+            {aiStreaming && (
+              <p className="admin-ai-streaming-badge">Actualizando template…</p>
+            )}
+            <textarea
+              className={`admin-editor${aiStreaming ? " admin-editor-streaming" : ""}`}
+              value={content}
+              onChange={(event) => setContent(event.target.value)}
+            />
+            <div className="admin-actions">
               <button
                 type="button"
-                className="admin-btn admin-btn-secondary"
-                onClick={handlePreview}
-                disabled={saving}
+                className="admin-btn"
+                onClick={handleSave}
+                disabled={saving || aiStreaming}
               >
-                Preview
+                {saving ? "Saving..." : "Save"}
               </button>
-            )}
-            {file.deletable !== false && (
-              <button
-                type="button"
-                className="admin-btn admin-btn-danger"
-                onClick={handleDelete}
-                disabled={saving}
-              >
-                Delete
-              </button>
-            )}
+              {isTemplate && (
+                <button
+                  type="button"
+                  className="admin-btn admin-btn-secondary"
+                  onClick={() => setAiOpen((open) => !open)}
+                  disabled={saving}
+                >
+                  {aiOpen ? "Ocultar IA" : "Generar estilo con IA"}
+                </button>
+              )}
+              {previewPath && (
+                <button
+                  type="button"
+                  className="admin-btn admin-btn-secondary"
+                  onClick={handlePreview}
+                  disabled={saving}
+                >
+                  Preview
+                </button>
+              )}
+              {file.deletable !== false && (
+                <button
+                  type="button"
+                  className="admin-btn admin-btn-danger"
+                  onClick={handleDelete}
+                  disabled={saving}
+                >
+                  Delete
+                </button>
+              )}
+            </div>
           </div>
-        </>
+          {isTemplate && (
+            <TemplateAiChat
+              open={aiOpen}
+              currentTemplate={content}
+              onTemplateUpdate={setContent}
+              onStreamingChange={setAiStreaming}
+              onClose={() => setAiOpen(false)}
+            />
+          )}
+        </div>
       )}
     </div>
   );

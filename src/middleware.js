@@ -14,6 +14,9 @@ export async function middleware(request) {
   }
 
   if (!authenticated) {
+    if (pathname.startsWith("/api/admin/")) {
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
+    }
     return NextResponse.redirect(new URL("/admin/login", request.url));
   }
 
@@ -21,5 +24,5 @@ export async function middleware(request) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*"],
+  matcher: ["/admin/:path*", "/api/admin/:path*"],
 };
