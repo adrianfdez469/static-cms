@@ -112,7 +112,7 @@ export default function FileEditor({ file, onSaved, onDeleted }) {
         <div className={aiOpen ? "admin-editor-layout" : undefined}>
           <div className="admin-editor-column">
             {aiStreaming && (
-              <p className="admin-ai-streaming-badge">Actualizando template…</p>
+              <p className="admin-ai-streaming-badge">Updating template…</p>
             )}
             <textarea
               className={`admin-editor${aiStreaming ? " admin-editor-streaming" : ""}`}
@@ -135,7 +135,7 @@ export default function FileEditor({ file, onSaved, onDeleted }) {
                   onClick={() => setAiOpen((open) => !open)}
                   disabled={saving}
                 >
-                  {aiOpen ? "Ocultar IA" : "Generar estilo con IA"}
+                  {aiOpen ? "Hide AI" : "Style with AI"}
                 </button>
               )}
               {previewPath && (

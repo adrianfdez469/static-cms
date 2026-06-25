@@ -151,27 +151,27 @@ export default function TemplateAiChat({
   return (
     <aside className="admin-ai-panel">
       <div className="admin-ai-header">
-        <h3>Estilo con IA</h3>
+        <h3>AI Styling</h3>
         <button
           type="button"
           className="admin-btn admin-btn-secondary admin-ai-close"
           onClick={onClose}
           disabled={streaming}
         >
-          Cerrar
+          Close
         </button>
       </div>
 
       <p className="admin-ai-hint">
-        Describe cómo quieres que se vea el template. Los cambios se aplican al
-        editor; usa Guardar para persistirlos.
+        Describe how you want the template to look. Changes apply to the editor;
+        use Save to persist them.
       </p>
 
       <div className="admin-ai-messages">
         {messages.length === 0 && (
           <p className="admin-ai-empty">
-            Ejemplo: &quot;Diseño minimalista con tipografía serif y fondo
-            crema&quot;
+            Example: &quot;Minimalist design with serif typography and cream
+            background&quot;
           </p>
         )}
         {messages.map((message, index) => (
@@ -180,7 +180,7 @@ export default function TemplateAiChat({
             className={`admin-ai-message admin-ai-message-${message.role}`}
           >
             <span className="admin-ai-message-role">
-              {message.role === "user" ? "Tú" : "IA"}
+              {message.role === "user" ? "You" : "AI"}
             </span>
             <p>{message.content || (streaming && index === messages.length - 1 ? "…" : "")}</p>
           </div>
@@ -195,7 +195,7 @@ export default function TemplateAiChat({
           className="admin-ai-input"
           value={input}
           onChange={(event) => setInput(event.target.value)}
-          placeholder="Describe el estilo del template..."
+          placeholder="Describe the template style..."
           rows={3}
           disabled={streaming}
         />
@@ -206,11 +206,11 @@ export default function TemplateAiChat({
               className="admin-btn admin-btn-secondary"
               onClick={handleStop}
             >
-              Detener
+              Stop
             </button>
           ) : (
             <button type="submit" className="admin-btn" disabled={!input.trim()}>
-              Enviar
+              Send
             </button>
           )}
         </div>
