@@ -1,0 +1,274 @@
+.admin-root {
+  min-height: 100vh;
+  font-family: system-ui, -apple-system, sans-serif;
+  color: #171717;
+  background: #f5f5f5;
+}
+
+.admin-root,
+.admin-root *,
+.admin-root *::before,
+.admin-root *::after {
+  box-sizing: border-box;
+}
+
+.login-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 1rem;
+}
+
+.login-form {
+  width: 100%;
+  max-width: 360px;
+  padding: 2rem;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.login-form h1 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.login-form p {
+  margin: 0;
+  color: #666;
+}
+
+.login-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.9rem;
+}
+
+.login-form input {
+  padding: 0.6rem 0.75rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.login-form button,
+.admin-btn {
+  padding: 0.6rem 1rem;
+  border: none;
+  border-radius: 4px;
+  background: #171717;
+  color: #fff;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.login-form button:hover,
+.admin-btn:hover {
+  background: #333;
+}
+
+.admin-btn-secondary {
+  background: #fff;
+  color: #171717;
+  border: 1px solid #ccc;
+}
+
+.admin-btn-secondary:hover {
+  background: #f0f0f0;
+}
+
+.admin-btn-danger {
+  background: #b91c1c;
+}
+
+.admin-btn-danger:hover {
+  background: #991b1b;
+}
+
+.admin-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.5rem;
+  background: #fff;
+  border-bottom: 1px solid #ddd;
+}
+
+.admin-header h1 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.admin-layout {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  min-height: calc(100vh - 65px);
+}
+
+.admin-sidebar {
+  background: #fff;
+  border-right: 1px solid #ddd;
+  padding: 1rem;
+  overflow: auto;
+  min-width: 0;
+}
+
+.admin-main {
+  padding: 1rem 1.5rem;
+  overflow: auto;
+  min-width: 0;
+}
+
+.admin-panel {
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 1rem;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.admin-panel h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1.1rem;
+}
+
+.admin-path {
+  margin: 0 0 1rem;
+  font-size: 0.85rem;
+  color: #666;
+  word-break: break-all;
+}
+
+.admin-error {
+  margin: 0 0 1rem;
+  padding: 0.75rem;
+  background: #fef2f2;
+  color: #b91c1c;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+.admin-success {
+  margin: 0 0 1rem;
+  padding: 0.75rem;
+  background: #f0fdf4;
+  color: #166534;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+.admin-editor {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  min-height: 420px;
+  padding: 0.75rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-family: ui-monospace, monospace;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  resize: vertical;
+  overflow-x: auto;
+}
+
+.admin-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.file-tree {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.file-tree ul {
+  list-style: none;
+  margin: 0;
+  padding-left: 1rem;
+}
+
+.file-tree-item {
+  margin: 0.15rem 0;
+}
+
+.file-tree-button {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  width: 100%;
+  padding: 0.35rem 0.5rem;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.file-tree-button:hover {
+  background: #f0f0f0;
+}
+
+.file-tree-button.selected {
+  background: #e5e5e5;
+  font-weight: 600;
+}
+
+.folder-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.folder-actions label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.9rem;
+}
+
+.folder-actions input[type="text"],
+.folder-actions input[type="file"] {
+  width: 100%;
+  max-width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.folder-actions-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: end;
+}
+
+.admin-empty {
+  color: #666;
+  font-size: 0.95rem;
+}
+
+.admin-main-centered {
+  max-width: 560px;
+  margin: 2rem auto;
+}
+
+.initialize-panel code {
+  font-family: ui-monospace, monospace;
+  font-size: 0.85em;
+}
+
+@media (max-width: 768px) {
+  .admin-layout {
+    grid-template-columns: 1fr;
+  }
+}
