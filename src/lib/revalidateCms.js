@@ -1,13 +1,13 @@
 "use server";
 
-import { revalidatePath, revalidateTag, updateTag } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { pageTag } from "./contentBuilder";
 import { TEMPLATE_PATH, storagePathToPublicPath } from "./cmsConstants";
 
 export async function revalidateAfterFileChange(path) {
   if (path === TEMPLATE_PATH) {
-    updateTag("cms:template", "max");
-    updateTag("cms:pages", "max");
+    updateTag("cms:template");
+    updateTag("cms:pages");
     return;
   }
 
@@ -15,9 +15,9 @@ export async function revalidateAfterFileChange(path) {
     
     const publicPath = storagePathToPublicPath(path);
     if (publicPath) {
-      revalidatePath(publicPath, "max");
+      revalidatePath(publicPath);
       const slug = publicPath.replace(/^\//, "").split("/").filter(Boolean);
-      updateTag(pageTag(slug), "max");
+      updateTag(pageTag(slug));
     }
   }
 }
