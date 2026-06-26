@@ -47,3 +47,16 @@ describe("error pages", () => {
     expect(html).toMatch(/<!DOCTYPE html>|<html/i);
   });
 });
+
+describe("buildIndexPage", () => {
+  it("renders the home page when the bucket is empty", async () => {
+    const { buildIndexPage } = await import("./contentBuilder");
+    const html = await buildIndexPage();
+
+    expect(html).toContain("Available pages");
+    expect(html).toContain("No pages yet");
+    expect(html).toContain("/admin");
+    expect(html).not.toContain("{{content}}");
+    expect(html).toMatch(/<!DOCTYPE html>|<html/i);
+  });
+});

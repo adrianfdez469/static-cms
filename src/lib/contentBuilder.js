@@ -51,10 +51,7 @@ async function downloadFile(path) {
 const fetchTemplate = unstable_cache(
   async () => {
     const template = await downloadFile(TEMPLATE_PATH);
-    if (!template) {
-      throw new Error(`Template not found: ${TEMPLATE_PATH}`);
-    }
-    return template;
+    return template ?? DEFAULT_TEMPLATE;
   },
   ["cms-template"],
   { revalidate: false, tags: ["cms:template", "cms:pages"] }
@@ -63,10 +60,7 @@ const fetchTemplate = unstable_cache(
 async function getTemplate() {
   if (isDev) {
     const template = await downloadFile(TEMPLATE_PATH);
-    if (!template) {
-      throw new Error(`Template not found: ${TEMPLATE_PATH}`);
-    }
-    return template;
+    return template ?? DEFAULT_TEMPLATE;
   }
 
   return fetchTemplate();
@@ -116,9 +110,13 @@ function buildIndexContentHtml(routes) {
     .map((route) => `    <li><a href="${route}">${route}</a></li>`)
     .join("\n");
 
+  const emptyMessage = routes.length
+    ? ""
+    : `  <p>No pages yet. <a href="/admin">Open the admin panel</a> to initialize the CMS.</p>\n`;
+
   return `<nav>
   <h1>Available pages</h1>
-  <ul>
+${emptyMessage}  <ul>
 ${items}
   </ul>
   <p><a href="/admin">Admin</a></p>
@@ -174,15 +172,9 @@ function buildErrorContentHtml({ heading, message }) {
 }
 
 async function buildErrorPage({ heading, message }) {
+  const template = await getTemplate();
   const contentHtml = buildErrorContentHtml({ heading, message });
-
-  try {
-    const template = await getTemplate();
-    return renderTemplate(template, contentHtml);
-  } catch (error) {
-    console.error("Error page template render failed:", error);
-    return renderTemplate(DEFAULT_TEMPLATE, contentHtml);
-  }
+  return renderTemplate(template, contentHtml);
 }
 
 export function buildNotFoundPage() {
