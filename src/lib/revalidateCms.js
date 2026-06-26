@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath, updateTag } from "next/cache";
-import { pageTag } from "./contentBuilder";
+import { listContentRoutesCached, pageTag } from "./contentBuilder";
 import { TEMPLATE_PATH, storagePathToPublicPath } from "./cmsConstants";
 
 export async function revalidateAfterFileChange(path) {
@@ -9,11 +9,10 @@ export async function revalidateAfterFileChange(path) {
     updateTag("cms:template");
     updateTag("cms:pages");
 
-    const routes = await listContentRoutes();
+    const routes = await listContentRoutesCached();
     for (const route of routes) {
       revalidatePath(route);
     }
-
     return;
   }
 

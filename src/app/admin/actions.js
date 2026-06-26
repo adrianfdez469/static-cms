@@ -79,7 +79,7 @@ export async function saveFileAction(path, content) {
   try {
     await requireAuth();
     await saveFile(path, content);
-    revalidateAfterFileChange(path);
+    await revalidateAfterFileChange(path);
     return actionSuccess();
   } catch (error) {
     return actionError(error.message);
@@ -90,7 +90,7 @@ export async function deleteFileAction(path) {
   try {
     await requireAuth();
     await deleteFile(path);
-    revalidateAfterFileChange(path);
+    await revalidateAfterFileChange(path);
     return actionSuccess();
   } catch (error) {
     return actionError(error.message);
@@ -111,7 +111,7 @@ export async function createFileAction(parentPath, relativePath) {
   try {
     await requireAuth();
     const filePath = await createFile(parentPath, relativePath);
-    revalidateAfterFileChange(filePath);
+    await revalidateAfterFileChange(filePath);
     return actionSuccess({ path: filePath });
   } catch (error) {
     return actionError(error.message);
@@ -129,7 +129,7 @@ export async function uploadFileAction(parentPath, relativePath, formData) {
 
     const buffer = Buffer.from(await file.arrayBuffer());
     const filePath = await uploadFile(parentPath, relativePath?.trim() ?? "", buffer);
-    revalidateAfterFileChange(filePath);
+    await revalidateAfterFileChange(filePath);
     return actionSuccess({ path: filePath });
   } catch (error) {
     return actionError(error.message);

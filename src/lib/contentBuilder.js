@@ -104,6 +104,10 @@ export async function listContentRoutes() {
   return routes.sort();
 }
 
+export async function listContentRoutesCached() {
+  return withCmsCache(listContentRoutes, ["cms-routes"], ["cms:routes"]);
+}
+
 async function buildPageUncached(slug) {
   const storagePath = toStoragePath(slug);
   if (!storagePath) return null;
