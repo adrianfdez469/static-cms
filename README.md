@@ -26,14 +26,16 @@ Public content URLs are served by a **required** catch-all route handler
 (`[...slug]/route.js`) that maps each path to storage. The home page (`/`) is a
 separate React page (`page.js`) that lists available routes. On the first request
 to a content page, the server fetches Markdown and the HTML template from
-storage, renders the page, and **caches the result indefinitely** via
-`unstable_cache`. Subsequent requests are served from that cache without hitting
-Supabase again.
+storage, renders the page, and **caches the result indefinitely** in the Next.js
+Data Cache via `unstable_cache`. Subsequent requests are served from that cache
+without hitting Supabase again.
 
 When content or the template changes through the admin panel, the app
-**invalidates the relevant cache tags and paths** (`revalidateTag` /
-`revalidatePath`), so the next visit rebuilds the page from storage. In
-development, caching is bypassed so changes are always visible immediately.
+**invalidates the relevant cache tags and paths** — `updateTag` and
+`revalidatePath` for the Next.js Data Cache, plus `invalidateByTag` (from
+`@vercel/functions`) for the Vercel CDN — so the next visit rebuilds the page
+from storage. In development, caching is bypassed so changes are always visible
+immediately.
 
 ### Vercel
 
@@ -41,6 +43,14 @@ Vercel is the platform Next.js is built for and the one recommended in its
 documentation. Deployment is a git push away: connect the repository, set
 environment variables, and the app is live. That simplicity matters for a small,
 self-contained CMS.
+
+In production on Vercel, rendered HTML is also cached at the **edge CDN** for up
+to one year (`Vercel-CDN-Cache-Control`). Each response carries
+`Vercel-Cache-Tag` headers (`cms:page:<slug>`, `cms:pages`, `cms:template`) so
+the admin panel can purge stale CDN entries on demand via
+`invalidateByTag`. The browser always revalidates (`Cache-Control: max-age=0,
+must-revalidate`), so visitors get fresh content from the CDN after an admin
+write without holding long-lived browser caches.
 
 ### Supabase Storage (instead of the repo filesystem)
 
@@ -68,15 +78,20 @@ relational database or a third-party headless CMS.
 
 ### Trade-off: caching vs. live updates
 
-Aggressive caching improves response times, but the CDN/cache layer has no way to
-know when a file changes in Supabase on its own.
+Aggressive caching improves response times across two layers — the Next.js Data
+Cache (`unstable_cache`) and the Vercel CDN — but neither layer knows on its own
+when a file changes in Supabase.
 
 Because **the admin panel lives in the same application**, every create, update,
-or delete triggers targeted revalidation. That keeps pages fast *and* up to date
-without redeploying. The main caveat remains: changes made **directly in the
-Supabase dashboard** (bypassing the admin) will not invalidate the cache until
-the next admin write. See [Future improvements](#future-improvements) for
-planned mitigations.
+or delete triggers targeted invalidation on both layers (`updateTag` +
+`invalidateByTag`, and `revalidatePath` for individual content pages). A
+`template.html` change invalidates the global `cms:template` and `cms:pages`
+tags, which clears **all** pages from the CDN in one shot. That keeps pages fast
+*and* up to date without redeploying. The main caveat remains: changes made
+**directly in the Supabase dashboard** (bypassing the admin) will not invalidate
+either cache layer until the next admin write. CDN tag invalidation only takes
+effect when deployed on Vercel. See [Future improvements](#future-improvements)
+for planned mitigations.
 
 ---
 
@@ -89,10 +104,12 @@ planned mitigations.
 - **Dynamic routing** — a catch-all route handler (`[...slug]/route.js`) serves
   any content page from storage as raw HTML. The home page (`page.js`) is a
   React index that lists all published routes by traversing the storage tree.
-- **Aggressive caching + on-demand revalidation** — pages are cached with
-  `unstable_cache` (`revalidate: false`) and invalidated via tags whenever
-  content or the template changes. Caching is bypassed automatically in
-  development.
+- **Two-layer caching + on-demand revalidation** — pages are cached indefinitely
+  in the Next.js Data Cache (`unstable_cache`, `revalidate: false`) and at the
+  Vercel CDN edge (`Vercel-CDN-Cache-Control` + `Vercel-Cache-Tag`). Admin
+  writes call `updateTag` (Data Cache) and `invalidateByTag` (CDN) so both
+  layers stay in sync. Error responses (404/500) use `Cache-Control: no-store`.
+  Caching is bypassed automatically in development.
 - **Admin panel** (`/admin`) — protected by a signed-cookie session. Lets you:
   - Browse the content tree.
   - Create, edit, upload, and delete Markdown pages.
@@ -113,6 +130,7 @@ planned mitigations.
 | ----------- | --------------------------------------- |
 | Framework   | Next.js 16 (App Router) + React 19      |
 | Storage     | Supabase Storage                        |
+| CDN cache   | `@vercel/functions` (`invalidateByTag`) |
 | Markdown    | `marked`                                |
 | AI          | `@anthropic-ai/sdk` (Claude)            |
 | Styling     | Tailwind CSS 4                          |
@@ -260,7 +278,7 @@ src/
 │   ├── storageAdmin.js            # Privileged storage ops (service role key)
 │   ├── supabase.js / supabaseAdmin.js  # Supabase clients (anon vs service role)
 │   ├── auth.js / authSession.js    # Cookie session + HMAC token verification
-│   ├── revalidateCms.js            # Tag/path revalidation on content changes
+│   ├── revalidateCms.js            # Data Cache + CDN invalidation on content changes
 │   └── templateAi/                 # Prompt, tool schema, streaming, validation
 └── middleware.js                   # Protects /admin and /api/admin routes
 ```
@@ -285,8 +303,10 @@ to discover pages in storage.
   `{{content}}` placeholder) via the admin editor — optionally using the AI
   assistant.
 - **Change the bucket name or paths:** edit `src/lib/cmsConstants.js`.
-- **Adjust caching/revalidation:** see `contentBuilder.js` (cache tags) and
-  `revalidateCms.js` (what gets invalidated on each change).
+- **Adjust caching/revalidation:** see `contentBuilder.js` (Data Cache tags and
+  keys), `[...slug]/route.js` (CDN cache headers and `Vercel-Cache-Tag`), and
+  `revalidateCms.js` (what gets invalidated on each change — `updateTag`,
+  `revalidatePath`, and `invalidateByTag`).
 - **Tune the AI assistant:** edit the system prompt in
   `src/lib/templateAi/prompt.js`, the tool schema in `tools.js`, or the
   validation rules in `validateTemplate.js`.
@@ -314,6 +334,10 @@ This project is deployed on Vercel: https://static-cms-umber.vercel.app
 3. Deploy. After the first deploy, open `/admin`, log in, and **Initialize CMS**
    if you're using a fresh bucket.
 
+CDN tag invalidation (`invalidateByTag`) is a Vercel platform feature and works
+automatically when deployed there — no extra configuration is required beyond
+deploying to Vercel.
+
 ---
 
 ## Notes & caveats
@@ -321,7 +345,9 @@ This project is deployed on Vercel: https://static-cms-umber.vercel.app
 - **Bucket name is case-sensitive** and hardcoded to `CMS` in
   `src/lib/cmsConstants.js`.
 - **In development, caching is disabled** so you always see fresh content; in
-  production, content is cached until a write triggers revalidation.
+  production, content is cached in both the Next.js Data Cache and the Vercel CDN
+  until an admin write triggers invalidation (`updateTag` + `invalidateByTag`).
+  CDN invalidation has no effect outside Vercel (e.g. `npm run start` locally).
 - The admin session is a stateless, HMAC-signed cookie that expires after 24h.
 - The AI assistant is intentionally scoped to template styling only and will
   refuse off-topic requests; generated HTML is validated before being applied.
@@ -338,9 +364,9 @@ This project is deployed on Vercel: https://static-cms-umber.vercel.app
   - Cap the number of routes returned (e.g. first N alphabetically) and show a
     "and X more" message with a link to the admin tree.
   - Limit traversal depth or paginate the list on the home page.
-  - Cache the route list server-side (e.g. `unstable_cache` with a `cms:routes`
-    tag invalidated on content changes) and render the index on the server
-    instead of fetching from the client.
+  - Switch the home page to `listContentRoutesCached()` (already implemented with
+    a `cms:routes` tag that is invalidated on content changes) and render the
+    index on the server instead of fetching from the client.
   - Maintain a lightweight route manifest file in storage (updated on each
     admin write) to avoid full-tree scans.
 - **Route warmup** — The first request to each page still fetches Markdown and
@@ -350,9 +376,9 @@ This project is deployed on Vercel: https://static-cms-umber.vercel.app
   real visitors hit them.
 - **Storage change notifications** — Revalidation today only runs automatically
   when writes go through `/admin`. Edits made directly in the Supabase dashboard
-  leave stale cached pages until the next admin write.
+  leave stale cached pages (both Data Cache and CDN) until the next admin write.
   A future enhancement would wire up a **Supabase Storage webhook or
   subscription** (e.g. a Database Webhook on `storage.objects`, an Edge
   Function, or Realtime) that notifies the app when files are created, updated,
-  or deleted and triggers the same tag/path revalidation used by the admin
-  panel.
+  or deleted and triggers the same `updateTag` / `invalidateByTag` flow used by
+  the admin panel.
