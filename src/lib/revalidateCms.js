@@ -2,7 +2,7 @@ import { revalidatePath, revalidateTag } from "next/cache";
 import { pageTag } from "./contentBuilder";
 import { TEMPLATE_PATH, storagePathToPublicPath } from "./cmsConstants";
 
-export function revalidateAfterFileChange(path, action = "update") {
+export function revalidateAfterFileChange(path) {
   if (path === TEMPLATE_PATH) {
     revalidateTag("cms:template");
     revalidateTag("cms:pages");
@@ -16,10 +16,6 @@ export function revalidateAfterFileChange(path, action = "update") {
       revalidatePath(publicPath);
       const slug = publicPath.replace(/^\//, "").split("/").filter(Boolean);
       revalidateTag(pageTag(slug));
-    }
-
-    if (action === "delete" || action === "create") {
-      revalidateTag("cms:pages");
     }
   }
 }
