@@ -20,10 +20,7 @@ export async function GET(_request, { params }) {
   const { slug } = await params;
 
   try {
-    const html =
-      !slug || slug.length === 0
-        ? await buildIndexPage()
-        : await buildPage(slug);
+    const html = await buildPage(slug);
 
     if (!html) {
       return new Response(await buildNotFoundPage(), {

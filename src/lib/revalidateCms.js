@@ -10,9 +10,7 @@ export function revalidateAfterFileChange(path, action = "update") {
   }
 
   if (path.startsWith("content/")) {
-    revalidateTag("cms:index");
-    revalidatePath("/");
-
+    
     const publicPath = storagePathToPublicPath(path);
     if (publicPath) {
       revalidatePath(publicPath);

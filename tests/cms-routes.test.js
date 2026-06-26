@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { GET } from "@/app/[[...slug]]/route";
+import { GET } from "@/app/[...slug]/route.js";
 import { INVALID_SLUG, TEST_SLUG } from "./fixtures/cms.js";
 
 function createContext(slug) {
-  const path = slug.length ? `/${slug.join("/")}` : "/";
+  const path = `/${slug.join("/")}`;
   return {
     request: new Request(`http://localhost${path}`),
     context: { params: Promise.resolve({ slug }) },

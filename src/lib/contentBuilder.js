@@ -22,11 +22,10 @@ function withCmsCache(fn, keyParts, tags) {
 }
 
 export function pageTag(slug) {
-  return slug?.length ? `cms:page:${slug.join("/")}` : "cms:index";
+  return `cms:page:${slug.join("/")}`;
 }
 
 function toStoragePath(slug) {
-  if (!slug?.length) return null;
   return `${CONTENT_PREFIX}/${slug.join("/")}/index.md`;
 }
 
@@ -105,39 +104,6 @@ export async function listContentRoutes() {
   return routes.sort();
 }
 
-function buildIndexContentHtml(routes) {
-  const items = routes
-    .map((route) => `    <li><a href="${route}">${route}</a></li>`)
-    .join("\n");
-
-  const emptyMessage = routes.length
-    ? ""
-    : `  <p>No pages yet. <a href="/admin">Open the admin panel</a> to initialize the CMS.</p>\n`;
-
-  return `<nav>
-  <h1>Available pages</h1>
-${emptyMessage}  <ul>
-${items}
-  </ul>
-  <p><a href="/admin">Admin</a></p>
-</nav>`;
-}
-
-async function buildIndexPageUncached() {
-  const template = await getTemplate();
-  const routes = await listContentRoutes();
-  const contentHtml = buildIndexContentHtml(routes);
-  return renderTemplate(template, contentHtml);
-}
-
-export async function buildIndexPage() {
-  return withCmsCache(
-    () => buildIndexPageUncached(),
-    ["cms-index"],
-    ["cms:index", "cms:pages"]
-  );
-}
-
 async function buildPageUncached(slug) {
   const storagePath = toStoragePath(slug);
   if (!storagePath) return null;
@@ -154,7 +120,7 @@ async function buildPageUncached(slug) {
 }
 
 export async function buildPage(slug) {
-  const slugKey = slug?.join("/") ?? "__index__";
+  const slugKey = slug.join("/");
 
   return withCmsCache(
     () => buildPageUncached(slug),

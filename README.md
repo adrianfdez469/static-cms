@@ -22,11 +22,13 @@ Next.js was the natural fit because it unifies frontend and backend in a single
 application while supporting **SSR**, dynamic routing, and a powerful **caching
 layer**.
 
-The catch-all route (`[[...slug]]`) maps any URL to content stored externally.
-On the first request to a page, the server fetches Markdown and the HTML
-template from storage, renders the page, and **caches the result indefinitely**
-via `unstable_cache`. Subsequent requests are served from that cache without
-hitting Supabase again.
+Public content URLs are served by a **required** catch-all route handler
+(`[...slug]/route.js`) that maps each path to storage. The home page (`/`) is a
+separate React page (`page.js`) that lists available routes. On the first request
+to a content page, the server fetches Markdown and the HTML template from
+storage, renders the page, and **caches the result indefinitely** via
+`unstable_cache`. Subsequent requests are served from that cache without hitting
+Supabase again.
 
 When content or the template changes through the admin panel, the app
 **invalidates the relevant cache tags and paths** (`revalidateTag` /
@@ -84,8 +86,9 @@ manual revalidation (e.g. `POST /api/revalidate`) or the next admin write. See
   `content/<slug>/index.md` inside the `CMS` Supabase Storage bucket.
 - **Single HTML template** — `template.html` (with one `{{content}}` placeholder)
   wraps every rendered page. Markdown is converted to HTML with `marked`.
-- **Dynamic routing** — a catch-all route (`[[...slug]]`) serves any page from
-  storage. The home page auto-generates an index of all available routes.
+- **Dynamic routing** — a catch-all route handler (`[...slug]/route.js`) serves
+  any content page from storage as raw HTML. The home page (`page.js`) is a
+  React index that lists all published routes by traversing the storage tree.
 - **Aggressive caching + on-demand revalidation** — pages are cached with
   `unstable_cache` (`revalidate: false`) and invalidated via tags whenever
   content or the template changes. Caching is bypassed automatically in
@@ -231,17 +234,19 @@ openssl rand -hex 32
 ```
 src/
 ├── app/
-│   ├── [[...slug]]/route.js        # Public catch-all renderer (Markdown → HTML)
+│   ├── page.js                     # Home page — lists available content routes
+│   ├── loading.js                  # Root loading UI
+│   ├── [...slug]/route.js          # Public catch-all renderer (Markdown → HTML)
 │   ├── admin/                      # Admin panel (page, layout, login, server actions)
 │   │   └── actions.js              # Server Actions for file CRUD + auth
 │   ├── api/
 │   │   ├── admin/template-ai/      # SSE endpoint streaming Claude responses
 │   │   └── revalidate/             # Secret-guarded revalidation endpoint
-│   └── layout.js / not-found.js
+│   └── layout.js / layout.css / not-found.js
 ├── components/admin/               # Admin UI (file tree, editor, AI chat, etc.)
 ├── lib/
 │   ├── cmsConstants.js             # Bucket name, paths, default template, limits
-│   ├── contentBuilder.js          # Reads storage, renders pages, caching logic
+│   ├── contentBuilder.js          # Reads storage, renders pages, lists routes, caching
 │   ├── storageAdmin.js            # Privileged storage ops (service role key)
 │   ├── supabase.js / supabaseAdmin.js  # Supabase clients (anon vs service role)
 │   ├── auth.js / authSession.js    # Cookie session + HMAC token verification
@@ -249,6 +254,18 @@ src/
 │   └── templateAi/                 # Prompt, tool schema, streaming, validation
 └── middleware.js                   # Protects /admin and /api/admin routes
 ```
+
+### Routing
+
+| URL pattern | Handler | Output |
+| ----------- | ------- | ------ |
+| `/` | `page.js` (React) | Home index with a list of published routes |
+| `/<slug>/…` | `[...slug]/route.js` (Route Handler) | Rendered HTML from Markdown + `template.html` |
+
+Content pages are returned as raw HTML from a Route Handler (not a React page
+component), which keeps the rendered output identical to what `template.html`
+defines. The home page is a regular React page that calls `listContentRoutes()`
+to discover pages in storage.
 
 ### Common iteration tasks
 
@@ -311,6 +328,19 @@ This project is deployed on Vercel: https://static-cms-umber.vercel.app
 
 ## Future improvements
 
+- **Home page route listing** — The home page (`page.js`) calls
+  `listContentRoutes()` in `contentBuilder.js`, which walks the entire
+  `content/` tree in Supabase Storage (one `list()` request per folder, BFS).
+  With many pages or deep nesting, this becomes slow and the client-side fetch
+  blocks the index from rendering. Improvements to consider:
+  - Cap the number of routes returned (e.g. first N alphabetically) and show a
+    "and X more" message with a link to the admin tree.
+  - Limit traversal depth or paginate the list on the home page.
+  - Cache the route list server-side (e.g. `unstable_cache` with a `cms:routes`
+    tag invalidated on content changes) and render the index on the server
+    instead of fetching from the client.
+  - Maintain a lightweight route manifest file in storage (updated on each
+    admin write) to avoid full-tree scans.
 - **Route warmup** — The first request to each page still fetches Markdown and
   the template from Supabase and renders HTML on the server. A warmup step could
   list all routes in storage and request each one proactively (after deploy, on a

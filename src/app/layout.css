@@ -1,0 +1,146 @@
+.root-layout {
+  min-height: 100vh;
+  font-family: system-ui, -apple-system, sans-serif;
+  color: #171717;
+  background: #fafafa;
+}
+
+.root-layout,
+.root-layout *,
+.root-layout *::before,
+.root-layout *::after {
+  box-sizing: border-box;
+}
+
+.home-page {
+  max-width: 42rem;
+  margin: 0 auto;
+  padding: 3rem 1.5rem 4rem;
+}
+
+.home-intro-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.home-intro h1 {
+  margin: 0;
+  font-size: 1.75rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.home-admin-link {
+  flex-shrink: 0;
+  padding: 0.45rem 0.85rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #171717;
+  text-decoration: none;
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  border-radius: 6px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.home-admin-link:hover {
+  border-color: #ccc;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.home-intro p {
+  margin: 0;
+  color: #525252;
+  line-height: 1.6;
+}
+
+.home-docs,
+.home-routes {
+  margin-top: 2.5rem;
+}
+
+.home-docs h2,
+.home-routes h2 {
+  margin: 0 0 1rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.home-docs ol {
+  margin: 0;
+  padding-left: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  line-height: 1.6;
+  color: #404040;
+}
+
+.home-docs li {
+  padding-left: 0.25rem;
+}
+
+.home-docs code {
+  font-size: 0.875em;
+  padding: 0.1em 0.35em;
+  background: #f0f0f0;
+  border-radius: 4px;
+}
+
+.home-docs a {
+  color: #171717;
+  font-weight: 500;
+}
+
+.home-empty {
+  margin: 0;
+  color: #525252;
+  line-height: 1.6;
+}
+
+.home-routes ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.home-routes li {
+  margin: 0;
+}
+
+.home-routes a {
+  display: block;
+  padding: 0.75rem 1rem;
+  color: #171717;
+  text-decoration: none;
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  border-radius: 6px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.home-routes a:hover {
+  border-color: #ccc;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.home-page a:focus-visible {
+  outline: 2px solid #171717;
+  outline-offset: 2px;
+}
+
+.loading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  height: 100vh;
+  font-size: 1.5rem;
+  font-weight: 600;
+  padding-top: 100px;
+}
