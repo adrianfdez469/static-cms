@@ -4,8 +4,8 @@ import { TEMPLATE_PATH, storagePathToPublicPath } from "./cmsConstants";
 
 export function revalidateAfterFileChange(path) {
   if (path === TEMPLATE_PATH) {
-    revalidateTag("cms:template");
-    revalidateTag("cms:pages");
+    revalidateTag("cms:template", "max");
+    revalidateTag("cms:pages", "max");
     return;
   }
 
@@ -13,9 +13,9 @@ export function revalidateAfterFileChange(path) {
     
     const publicPath = storagePathToPublicPath(path);
     if (publicPath) {
-      revalidatePath(publicPath);
+      revalidatePath(publicPath, "max");
       const slug = publicPath.replace(/^\//, "").split("/").filter(Boolean);
-      revalidateTag(pageTag(slug));
+      revalidateTag(pageTag(slug), "max");
     }
   }
 }
