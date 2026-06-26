@@ -9,6 +9,10 @@ export const revalidate = false;
 
 const HTML_HEADERS = {
   "Content-Type": "text/html; charset=utf-8",
+  // Solo el edge de Vercel (no se envía al navegador)
+  "Vercel-CDN-Cache-Control": "max-age=31536000",
+  // El navegador sigue revalidando en cada visita
+  "Cache-Control": "public, max-age=0, must-revalidate",
 };
 
 const ERROR_HEADERS = {
