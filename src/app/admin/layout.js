@@ -5,5 +5,9 @@ export const metadata = {
 };
 
 export default function AdminLayout({ children }) {
-  return <div className="admin-root">{children}</div>;
+  return (
+    <div className="admin-root">
+      {children}
+    </div>
+  );
 }
