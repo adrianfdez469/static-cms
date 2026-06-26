@@ -74,9 +74,9 @@ know when a file changes in Supabase on its own.
 Because **the admin panel lives in the same application**, every create, update,
 or delete triggers targeted revalidation. That keeps pages fast *and* up to date
 without redeploying. The main caveat remains: changes made **directly in the
-Supabase dashboard** (bypassing the admin) will not invalidate the cache until a
-manual revalidation (e.g. `POST /api/revalidate`) or the next admin write. See
-[Future improvements](#future-improvements) for planned mitigations.
+Supabase dashboard** (bypassing the admin) will not invalidate the cache until
+the next admin write. See [Future improvements](#future-improvements) for
+planned mitigations.
 
 ---
 
@@ -103,8 +103,6 @@ manual revalidation (e.g. `POST /api/revalidate`) or the next admin write. See
   assistant can rewrite the HTML/CSS via streaming. Output is validated
   (exactly one `{{content}}`, no `<script>`/inline handlers/`iframe`, https-only
   external links) before being applied.
-- **Revalidation API** — `POST /api/revalidate` (guarded by a shared secret) to
-  trigger path/tag revalidation externally.
 - **Security guards** — path traversal protection, 5MB file-size limit,
   extension allow-listing (`.md` in `content/`, `.html` for the template), and
   slug validation (lowercase letters, numbers, hyphens).
@@ -144,10 +142,27 @@ The app reads and writes content to a Supabase Storage bucket named `CMS`.
 2. Go to **Storage** → **Create a new bucket**:
    - **Name:** `CMS` (must match exactly — see `src/lib/cmsConstants.js`).
    - **Public bucket:** recommended **ON** if you want the "Preview" links and
-     direct asset access to work without signed URLs. Server-side reads use the
-     anon key, and all writes use the service role key, so private buckets also
-     work for rendering — just note the bucket name is case-sensitive.
-3. Grab your keys from **Project Settings** → **API**:
+     direct asset access to work without signed URLs. The bucket name is
+     case-sensitive.
+3. Add a **Storage RLS policy** so the anon key can read objects. Public page
+   rendering (`download`) and the home route list (`list`) both use
+   `NEXT_PUBLIC_SUPABASE_ANON_KEY`, not the service role. Without a `SELECT`
+   policy on `storage.objects`, folder listing fails and the home page shows no
+   routes even when content exists.
+
+   In **SQL Editor**, run:
+
+   ```sql
+   CREATE POLICY "Public read CMS bucket"
+   ON storage.objects
+   FOR SELECT
+   TO public
+   USING (bucket_id = 'CMS');
+   ```
+
+   All writes still go through the service role key in server actions, so this
+   policy only grants read access to the `CMS` bucket.
+4. Grab your keys from **Project Settings** → **API**:
    - `Project URL` → `NEXT_PUBLIC_SUPABASE_URL`
    - `anon` `public` key → `NEXT_PUBLIC_SUPABASE_ANON_KEY`
    - `service_role` key → `SUPABASE_SERVICE_ROLE_KEY`
@@ -170,9 +185,6 @@ cp .env.local.example .env.local
 NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
 SUPABASE_SERVICE_ROLE_KEY=eyJ...   # server-only, keep secret
-
-# Revalidation API secret (any long random string)
-REVALIDATE_SECRET=your-long-secret
 
 # Admin panel credentials
 ADMIN_USERNAME=admin
@@ -207,7 +219,6 @@ Create your first page in the admin panel, save it, and visit its route.
 | `NEXT_PUBLIC_SUPABASE_URL`      |   Yes    | Supabase → Project Settings → API → **Project URL**.                                    |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` |   Yes    | Supabase → Project Settings → API → **anon public** key. Used for public reads.         |
 | `SUPABASE_SERVICE_ROLE_KEY`     |   Yes    | Supabase → Project Settings → API → **service_role** key. Server-only; powers writes.   |
-| `REVALIDATE_SECRET`             |   Yes    | Any long random string you choose. Required to call `POST /api/revalidate`.             |
 | `ADMIN_USERNAME`                |   Yes    | Username for the admin panel login (you pick it).                                        |
 | `ADMIN_PASSWORD`                |   Yes    | Password for the admin panel login (you pick it).                                        |
 | `ADMIN_SESSION_SECRET`          |   Yes    | Long random string used to HMAC-sign the admin session cookie.                          |
@@ -217,7 +228,7 @@ Create your first page in the admin panel, save it, and visit its route.
 Tips for generating secrets:
 
 ```bash
-# Generate a strong random secret for REVALIDATE_SECRET / ADMIN_SESSION_SECRET
+# Generate a strong random secret for ADMIN_SESSION_SECRET
 openssl rand -hex 32
 ```
 
@@ -240,8 +251,7 @@ src/
 │   ├── admin/                      # Admin panel (page, layout, login, server actions)
 │   │   └── actions.js              # Server Actions for file CRUD + auth
 │   ├── api/
-│   │   ├── admin/template-ai/      # SSE endpoint streaming Claude responses
-│   │   └── revalidate/             # Secret-guarded revalidation endpoint
+│   │   └── admin/template-ai/      # SSE endpoint streaming Claude responses
 │   └── layout.js / layout.css / not-found.js
 ├── components/admin/               # Admin UI (file tree, editor, AI chat, etc.)
 ├── lib/
@@ -292,14 +302,6 @@ npm run test        # Run the test suite (Vitest)
 npm run test:watch  # Run tests in watch mode
 ```
 
-### Triggering revalidation manually
-
-```bash
-curl -X POST https://<your-domain>/api/revalidate \
-  -H "Content-Type: application/json" \
-  -d '{"secret":"<REVALIDATE_SECRET>","paths":["/"],"tags":["cms:pages"]}'
-```
-
 ---
 
 ## Deployment (Vercel)
@@ -348,7 +350,7 @@ This project is deployed on Vercel: https://static-cms-umber.vercel.app
   real visitors hit them.
 - **Storage change notifications** — Revalidation today only runs automatically
   when writes go through `/admin`. Edits made directly in the Supabase dashboard
-  leave stale cached pages until someone calls `POST /api/revalidate` manually.
+  leave stale cached pages until the next admin write.
   A future enhancement would wire up a **Supabase Storage webhook or
   subscription** (e.g. a Database Webhook on `storage.objects`, an Edge
   Function, or Realtime) that notifies the app when files are created, updated,
