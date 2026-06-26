@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { MAX_FILE_SIZE } from "@/lib/cmsConstants";
-import { validateTemplate } from "./validateTemplate";
+import { validateTemplate } from "@/lib/templateAi/validateTemplate";
 
 const VALID_TEMPLATE = `<!DOCTYPE html>
 <html lang="en">

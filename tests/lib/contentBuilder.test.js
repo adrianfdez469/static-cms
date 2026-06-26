@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { buildNotFoundPage, buildServerErrorPage } from "./contentBuilder";
-import { extractRenderableTemplateParts, renderTemplate } from "./templateHtml";
+import { buildNotFoundPage, buildServerErrorPage } from "@/lib/contentBuilder";
+import { extractRenderableTemplateParts, renderTemplate } from "@/lib/templateHtml";
 
 describe("templateHtml", () => {
   it("renders content into the template placeholder", () => {
@@ -50,7 +50,7 @@ describe("error pages", () => {
 
 describe("buildIndexPage", () => {
   it("renders the home page when the bucket is empty", async () => {
-    const { buildIndexPage } = await import("./contentBuilder");
+    const { buildIndexPage } = await import("../../src/lib/contentBuilder");
     const html = await buildIndexPage();
 
     expect(html).toContain("Available pages");
