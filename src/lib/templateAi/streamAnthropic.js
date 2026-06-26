@@ -3,7 +3,6 @@ import { buildSystemPrompt } from "./prompt";
 import { APPLY_TEMPLATE_TOOL } from "./tools";
 import { validateTemplate } from "./validateTemplate";
 
-const DEFAULT_MODEL = "claude-sonnet-4-20250514";
 const MAX_ITERATIONS = 3;
 const MAX_TOKENS = 8192;
 const MAX_CLIENT_MESSAGES = 12;
@@ -51,9 +50,12 @@ export async function streamTemplateAi({ messages, currentTemplate, signal, onEv
   if (!apiKey) {
     throw new Error("ANTHROPIC_API_KEY is not configured.");
   }
+  const model = process.env.ANTHROPIC_MODEL;
+  if (!model) {
+    throw new Error("ANTHROPIC_MODEL is not configured.");
+  }
 
   const client = new Anthropic({ apiKey });
-  const model = process.env.ANTHROPIC_MODEL || DEFAULT_MODEL;
   const system = buildSystemPrompt(currentTemplate);
   let conversation = truncateMessages(messages);
 
