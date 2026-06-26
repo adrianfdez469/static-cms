@@ -8,6 +8,12 @@ export async function revalidateAfterFileChange(path) {
   if (path === TEMPLATE_PATH) {
     updateTag("cms:template");
     updateTag("cms:pages");
+
+    const routes = await listContentRoutes();
+    for (const route of routes) {
+      revalidatePath(route);
+    }
+
     return;
   }
 
